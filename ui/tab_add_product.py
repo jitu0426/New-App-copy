@@ -169,7 +169,6 @@ def render_add_product_tab(products_df) -> None:
                 ):
                     delete_custom_item(item["ProductID"])
                     st.session_state.data_timestamp = time.time()
-                    st.cache_data.clear()
                     st.toast(f"Deleted '{item['ItemName']}'", icon="🗑️")
                     st.rerun()
     else:
@@ -204,7 +203,6 @@ def render_add_product_tab(products_df) -> None:
                 if st.button("↩ Reset", key=f"reset_{pid}", use_container_width=True):
                     remove_product_override(pid)
                     st.session_state.data_timestamp = time.time()
-                    st.cache_data.clear()
                     st.toast(f"Reset edits for {pid}", icon="↩️")
                     st.rerun()
     else:
@@ -236,7 +234,6 @@ def render_add_product_tab(products_df) -> None:
                 if st.button("↩ Restore", key=f"restore_{pid}", use_container_width=True):
                     unmark_product_deleted(pid)
                     st.session_state.data_timestamp = time.time()
-                    st.cache_data.clear()
                     st.toast(f"Restored {pid}", icon="✅")
                     st.rerun()
     else:

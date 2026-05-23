@@ -78,13 +78,14 @@ migrate_old_custom_items()
 # ── Load product data (cached; bust cache by updating data_timestamp) ─────
 products_df = load_data_cached(st.session_state.data_timestamp)
 
-# Rebuild fast ProductID → row lookup map
-# drop_duplicates keeps the last occurrence (same behaviour as the old iterrows loop)
-st.session_state.master_pid_map = (
-    products_df.drop_duplicates(subset="ProductID", keep="last")
-    .set_index("ProductID")
-    .to_dict("index")
-)
+# Rebuild ProductID lookup map only when product data actually changed
+if st.session_state.get("_pid_map_ts") != st.session_state.data_timestamp:
+    st.session_state.master_pid_map = (
+        products_df.drop_duplicates(subset="ProductID", keep="last")
+        .set_index("ProductID")
+        .to_dict("index")
+    )
+    st.session_state["_pid_map_ts"] = st.session_state.data_timestamp
 
 # ── Sidebar ───────────────────────────────────────────────────────────────
 from ui.sidebar import render_sidebar

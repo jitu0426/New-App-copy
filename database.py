@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 
 import psycopg2
+import psycopg2.pool
 import streamlit as st
 
 from config import SAVED_TEMPLATES_FILE
@@ -17,12 +18,30 @@ from imagekit_client import upload_custom_image
 logger = logging.getLogger(__name__)
 
 # =========================================================================
-# Database Connection
+# Database Connection Pool
 # =========================================================================
 
+@st.cache_resource
+def _get_pool():
+    """Create a persistent connection pool shared across all reruns."""
+    return psycopg2.pool.SimpleConnectionPool(
+        minconn=1,
+        maxconn=3,
+        dsn=st.secrets["DATABASE_URL"],
+    )
+
+
 def _get_conn():
-    """Get a PostgreSQL connection from environment variable."""
-    return psycopg2.connect(st.secrets["DATABASE_URL"])
+    """Borrow a connection from the pool."""
+    return _get_pool().getconn()
+
+
+def _release_conn(conn):
+    """Return a connection to the pool."""
+    try:
+        _get_pool().putconn(conn)
+    except Exception:
+        pass
 
 
 # =========================================================================
@@ -50,18 +69,21 @@ _DB_CACHE_KEY = "_products_db_cache"
 
 def _load_from_cloud():
     """Load DB from Supabase PostgreSQL."""
+    conn = None
     try:
         conn = _get_conn()
         cur = conn.cursor()
         cur.execute("SELECT data FROM products_db ORDER BY last_updated DESC LIMIT 1")
         row = cur.fetchone()
         cur.close()
-        conn.close()
         if row:
             logger.info("Database loaded from Supabase ✓")
             return row[0]  # JSONB auto-parsed to dict
     except Exception as e:
         logger.warning(f"Failed to load from Supabase: {e}")
+    finally:
+        if conn:
+            _release_conn(conn)
 
     logger.info("Starting with empty database")
     return get_empty_products_db()
@@ -69,6 +91,7 @@ def _load_from_cloud():
 
 def _write_to_cloud(db):
     """Write DB to Supabase PostgreSQL."""
+    conn = None
     try:
         conn = _get_conn()
         cur = conn.cursor()
@@ -79,11 +102,13 @@ def _write_to_cloud(db):
         )
         conn.commit()
         cur.close()
-        conn.close()
         logger.info("Database saved to Supabase ✓")
     except Exception as e:
         logger.error(f"Failed to save to Supabase: {e}")
         raise
+    finally:
+        if conn:
+            _release_conn(conn)
 
 
 def load_products_db():

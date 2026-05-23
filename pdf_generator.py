@@ -198,9 +198,12 @@ def generate_table_of_contents_html(df_sorted: pd.DataFrame) -> str:
             rep_img = ""
             for _, row in grp.iterrows():
                 s = str(row.get("ImageB64", ""))
-                if len(s) > 100:
-                    rep_img = s
-                    break
+                if len(s) > 10:
+                    if s.startswith("http"):
+                        s = get_image_as_base64_str(s) or ""
+                    if len(s) > 100:
+                        rep_img = s
+                        break
             bg = (
                 f"background-image:url('data:image/png;base64,{rep_img}') !important;"
                 if rep_img

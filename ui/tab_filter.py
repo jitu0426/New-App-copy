@@ -25,7 +25,11 @@ from ui.components import product_thumbnail_html, stats_bar, empty_state
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-def _render_product_list(df: pd.DataFrame, expanded: bool = False) -> None:
+def _render_product_list(
+    df: pd.DataFrame,
+    overridden_pids: set,
+    expanded: bool = False,
+) -> None:
     """
     Render products grouped by Category inside collapsible expanders.
 
@@ -33,8 +37,9 @@ def _render_product_list(df: pd.DataFrame, expanded: bool = False) -> None:
       [thumbnail] [product name + status badges] [checkbox]
 
     Args:
-        df       – filtered product DataFrame to display
-        expanded – whether to open all expanders by default (used in search mode)
+        df              – filtered product DataFrame to display
+        overridden_pids – set of ProductIDs that have DB overrides (pre-loaded by caller)
+        expanded        – whether to open all expanders by default (used in search mode)
     """
     if df.empty:
         empty_state("🔍", "No products match your current filters or search.")
@@ -42,10 +47,6 @@ def _render_product_list(df: pd.DataFrame, expanded: bool = False) -> None:
 
     # Collect ProductIDs already in cart for badge display
     cart_pids = {item.get("ProductID") for item in st.session_state.cart}
-
-    # Load overridden ProductIDs for 'EDITED' badge
-    db            = load_products_db()
-    overridden_pids = set(db.get("product_overrides", {}).keys())
 
     # Group by Category (preserving original order)
     for category, cat_df in df.groupby("Category", sort=False):
@@ -75,14 +76,15 @@ def _render_product_list(df: pd.DataFrame, expanded: bool = False) -> None:
                         unsafe_allow_html=True,
                     )
 
-                # Each product row
-                for row_idx, row in sub_df.iterrows():
-                    pid         = row["ProductID"]
-                    cb_key      = f"checkbox_{pid}_{row_idx}"
-                    in_cart     = pid in cart_pids
-                    is_new      = row.get("IsNew") == 1
-                    is_edited   = pid in overridden_pids
-                    is_custom   = str(pid).startswith("CUST_")
+                # Each product row — itertuples is 5-10x faster than iterrows
+                for row in sub_df.itertuples():
+                    row_idx  = row.Index
+                    pid      = row.ProductID
+                    cb_key   = f"checkbox_{pid}_{row_idx}"
+                    in_cart  = pid in cart_pids
+                    is_new   = getattr(row, "IsNew", 0) == 1
+                    is_edited = pid in overridden_pids
+                    is_custom = str(pid).startswith("CUST_")
 
                     # Build badge HTML
                     badges = ""
@@ -100,12 +102,12 @@ def _render_product_list(df: pd.DataFrame, expanded: bool = False) -> None:
 
                     with c_thumb:
                         st.markdown(
-                            product_thumbnail_html(row.get("ImageB64", ""), size=36),
+                            product_thumbnail_html(getattr(row, "ImageB64", ""), size=36),
                             unsafe_allow_html=True,
                         )
                     with c_name:
                         st.markdown(
-                            f"**{row['ItemName']}** {badges}",
+                            f"**{row.ItemName}** {badges}",
                             unsafe_allow_html=True,
                         )
                     with c_check:
@@ -127,7 +129,11 @@ def render_filter_tab(products_df: pd.DataFrame) -> None:
         st.error("⚠️ No product data found. Check Excel file paths or run **Refresh** in the sidebar.")
         return
 
-    working_df = products_df.copy()
+    # Load DB overrides once per render — passed into _render_product_list to avoid repeated calls
+    _db = load_products_db()
+    _overridden_pids = set(_db.get("product_overrides", {}).keys())
+
+    working_df = products_df
 
     # ── Global search bar ─────────────────────────────────────────────────
     def _sync_search():
@@ -154,7 +160,7 @@ def render_filter_tab(products_df: pd.DataFrame) -> None:
             ("Search results", f"{len(working_df)} products"),
             ("Cart", f"{len(st.session_state.cart)} items"),
         ])
-        _render_product_list(working_df, expanded=True)
+        _render_product_list(working_df, _overridden_pids, expanded=True)
         return
 
     # ═════════════════════════════════════════════════════════════════════
@@ -288,4 +294,4 @@ def render_filter_tab(products_df: pd.DataFrame) -> None:
             ("Categories", f"{working_df['Category'].nunique()}"),
             ("Cart", f"{len(st.session_state.cart)} items"),
         ])
-        _render_product_list(working_df, expanded=False)
+        _render_product_list(working_df, _overridden_pids, expanded=False)

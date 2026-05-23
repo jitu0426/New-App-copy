@@ -42,9 +42,16 @@ def confirm_action(key: str, label: str, message: str, danger: bool = False) -> 
 # ── Product thumbnail ─────────────────────────────────────────────────────
 def product_thumbnail_html(image_b64: str, size: int = 38) -> str:
     """Return an <img> or placeholder <div> for a product thumbnail."""
-    if image_b64 and len(str(image_b64)) > 100:
+    val = str(image_b64) if image_b64 else ""
+    if val.startswith("http"):
         return (
-            f'<img src="data:image/jpeg;base64,{image_b64}" '
+            f'<img src="{val}" loading="lazy" '
+            f'class="product-thumb" '
+            f'style="width:{size}px;height:{size}px;object-fit:cover;" />'
+        )
+    if val and len(val) > 100:
+        return (
+            f'<img src="data:image/jpeg;base64,{val}" '
             f'class="product-thumb" '
             f'style="width:{size}px;height:{size}px;object-fit:cover;" />'
         )

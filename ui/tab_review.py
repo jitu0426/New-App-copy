@@ -2,7 +2,6 @@
 HEM Product Catalogue v3 — Tab 2: Review & Edit Cart
 Inline editing, change detection, per-row removal, and cart clear.
 """
-import time
 import pandas as pd
 import streamlit as st
 
@@ -112,8 +111,6 @@ def render_review_tab() -> None:
                     if item.get("ProductID") == pid:
                         item.update(delta)
             save_cart_to_db(st.session_state.cart)
-            st.session_state.data_timestamp = time.time()
-            st.cache_data.clear()
             st.toast(f"Saved {len(changes)} edit(s)!", icon="✅")
             st.rerun()
 

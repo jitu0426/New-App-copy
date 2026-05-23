@@ -2,6 +2,7 @@
 HEM Product Catalogue - Data Loader Module
 Excel loading, ImageKit.io image matching, and cached data pipeline.
 """
+import os
 import hashlib
 import logging
 
@@ -13,7 +14,6 @@ from config import (
 )
 from imagekit_client import (
     get_image_as_base64_str, fetch_all_imagekit_resources,
-    batch_download_images,
 )
 from database import load_products_db
 
@@ -64,11 +64,11 @@ def create_safe_id(text):
 # =========================================================================
 
 @st.cache_data(show_spinner="Syncing Data (Smart Match v5 + Persistent DB)...")
-def load_data_cached(_dummy_timestamp):
+def load_data_cached(dummy_timestamp):
     """Load all product data from Excel files, ImageKit.io images, and custom products.
 
     Uses Streamlit cache; pass a changing timestamp to bust the cache.
-    The underscore prefix on _dummy_timestamp tells Streamlit not to hash it.
+    dummy_timestamp is hashed by Streamlit — changing it invalidates only this function's cache.
     """
     all_data = []
     required_output_cols = REQUIRED_OUTPUT_COLS
@@ -99,7 +99,6 @@ def load_data_cached(_dummy_timestamp):
 
     # --- C. EXCEL LOADING & MATCHING ---
     for catalogue_name, excel_path in CATALOGUE_PATHS.items():
-        import os
         if not os.path.exists(excel_path):
             continue
         try:
@@ -217,14 +216,10 @@ def load_data_cached(_dummy_timestamp):
                             optimized_url = found_url
                         index_to_url[index] = optimized_url
 
-            # BATCH DOWNLOAD all matched images in parallel (16 threads)
+            # Store optimized URLs directly — browser fetches lazily, no startup download
             if index_to_url:
-                unique_urls = list(set(index_to_url.values()))
-                url_to_b64 = batch_download_images(unique_urls, max_workers=16)
                 for idx, url in index_to_url.items():
-                    b64 = url_to_b64.get(url, "")
-                    if b64:
-                        df.loc[idx, "ImageB64"] = b64
+                    df.loc[idx, "ImageB64"] = url
 
             all_data.append(df[required_output_cols])
         except Exception as e:
@@ -239,16 +234,7 @@ def load_data_cached(_dummy_timestamp):
             if col not in custom_df.columns:
                 custom_df[col] = '' if col != 'IsNew' else 0
 
-        # Batch download custom product images in parallel
-        custom_urls = {}
-        for idx, row in custom_df.iterrows():
-            if str(row['ImageB64']).startswith('http'):
-                custom_urls[idx] = row['ImageB64']
-        if custom_urls:
-            unique_custom = list(set(custom_urls.values()))
-            custom_b64 = batch_download_images(unique_custom, max_workers=8)
-            for idx, url in custom_urls.items():
-                custom_df.at[idx, 'ImageB64'] = custom_b64.get(url, "")
+        # Custom product images are already stored as ImageKit URLs — keep as-is
 
         all_data.append(custom_df[required_output_cols])
 
