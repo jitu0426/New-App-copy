@@ -1,6 +1,6 @@
 """
-HEM Product Catalogue v3 - HEM Brand Light Theme
-==================================================
+HEM Product Catalogue v3 - HEM Brand Light Theme (UI/UX Pro Max Enhanced)
+==========================================================================
 Authentic HEM Corporation light palette:
   Primary:   HEM Crimson Red   #c8102e
   Secondary: Saffron Amber     #e8870a
@@ -74,9 +74,10 @@ APP_CSS = """
     --r-lg:  18px;
     --r-xl:  24px;
 
-    /* ── Transitions ── */
-    --t-fast:   0.15s ease;
-    --t-normal: 0.25s ease;
+    /* ── Transitions (150ms enter / 100ms exit) ── */
+    --t-fast:   0.15s ease-out;
+    --t-exit:   0.10s ease-in;
+    --t-normal: 0.25s ease-out;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -88,6 +89,8 @@ APP_CSS = """
     background: var(--bg-page) !important;
     color: var(--text-body) !important;
     font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .main .block-container {
@@ -108,6 +111,21 @@ APP_CSS = """
         radial-gradient(ellipse 100% 100% at 50% 50%, #fff9f5 0%, #fdf4ee 100%);
     z-index: -1;
     pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY — Focus states (WCAG 2.1 AA)
+═══════════════════════════════════════════════════════════════════════════ */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[data-baseweb="tab"]:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--hem-red) !important;
+    outline-offset: 2px !important;
+    border-radius: var(--r-sm) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -215,9 +233,10 @@ APP_CSS = """
     color: var(--text-mid) !important;
     background: transparent !important;
     border: 1px solid transparent !important;
-    transition: all var(--t-normal);
+    transition: all var(--t-fast);
     letter-spacing: 0.2px;
     font-family: 'Inter', sans-serif;
+    position: relative;
 }
 
 .stTabs [data-baseweb="tab"]:hover {
@@ -226,12 +245,33 @@ APP_CSS = """
     border-color: var(--border-red) !important;
 }
 
-/* Active tab — HEM red */
+/* Active tab — HEM red with gold indicator */
 .stTabs [aria-selected="true"] {
     background: var(--hem-red) !important;
     color: #ffffff !important;
     border-color: var(--hem-red) !important;
     box-shadow: var(--shadow-red) !important;
+}
+
+/* Gold dot above active tab */
+.stTabs [aria-selected="true"]::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+}
+
+/* Saffron-gold bottom accent on active tab */
+.stTabs [aria-selected="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--saffron), var(--gold), var(--saffron));
+    border-radius: 2px;
+    opacity: 0.8;
 }
 
 .stTabs [data-baseweb="tab-highlight"] {
@@ -259,7 +299,7 @@ button[kind="primary"],
     padding: 10px 22px !important;
     box-shadow: 0 4px 14px rgba(200,16,46,0.30),
                 inset 0 1px 0 rgba(255,255,255,0.15) !important;
-    transition: all var(--t-normal) !important;
+    transition: all var(--t-fast) !important;
     position: relative;
     overflow: hidden;
 }
@@ -289,7 +329,7 @@ button[kind="secondary"],
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
     border-radius: 8px !important;
-    transition: all var(--t-normal) !important;
+    transition: all var(--t-fast) !important;
 }
 button[kind="secondary"]:hover {
     background: rgba(232,135,10,0.12) !important;
@@ -315,6 +355,31 @@ button[kind="tertiary"]:hover {
     border-color: var(--border-red) !important;
 }
 
+/* ── Danger — Clear/Delete/Remove actions ── */
+.btn-danger,
+button[data-testid*="clear"],
+button[data-testid*="delete"],
+button[data-testid*="remove"] {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(220,38,38,0.30) !important;
+    transition: all var(--t-fast) !important;
+}
+.btn-danger:hover,
+button[data-testid*="clear"]:hover,
+button[data-testid*="delete"]:hover,
+button[data-testid*="remove"]:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+    box-shadow: 0 6px 20px rgba(220,38,38,0.40) !important;
+    transform: translateY(-1px) !important;
+}
+
 /* ── Download button — Gold ── */
 [data-testid="stDownloadButton"] button {
     background: linear-gradient(135deg,
@@ -327,7 +392,7 @@ button[kind="tertiary"]:hover {
     text-transform: uppercase !important;
     font-size: 12px !important;
     border-radius: 8px !important;
-    transition: all var(--t-normal) !important;
+    transition: all var(--t-fast) !important;
 }
 [data-testid="stDownloadButton"] button:hover {
     background: rgba(253,188,0,0.20) !important;
@@ -486,10 +551,12 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
    SECTION HEADERS
 ═══════════════════════════════════════════════════════════════════════════ */
 .section-header {
-    background: linear-gradient(135deg,
-        var(--hem-red-pale) 0%,
-        rgba(232,135,10,0.05) 70%,
-        var(--hem-red-pale) 100%);
+    background:
+        radial-gradient(ellipse at left, rgba(200,16,46,0.06) 0%, transparent 60%),
+        linear-gradient(135deg,
+            var(--hem-red-pale) 0%,
+            rgba(232,135,10,0.05) 70%,
+            var(--hem-red-pale) 100%);
     border: 1px solid var(--border-red);
     border-left: 4px solid var(--hem-red);
     border-radius: 0 var(--r-md) var(--r-md) 0;
@@ -504,16 +571,6 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
     align-items: center;
     gap: 12px;
     box-shadow: var(--shadow-sm);
-    position: relative;
-    overflow: hidden;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    right: 20px; top: 50%; transform: translateY(-50%);
-    width: 50px; height: 1px;
-    background: linear-gradient(90deg, var(--saffron), transparent);
-    opacity: 0.6;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -547,37 +604,59 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
     box-shadow: var(--shadow-lg);
 }
 
+/* ── Glassmorphism panel variant ── */
+.glass-panel {
+    background: rgba(255,249,245,0.85);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: var(--r-xl);
+    padding: 20px 24px;
+    box-shadow:
+        0 8px 32px rgba(200,16,46,0.08),
+        0 2px 8px rgba(0,0,0,0.06);
+    margin: 12px 0;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   STATS BAR
+   STATS BAR — Individual card style per stat
 ═══════════════════════════════════════════════════════════════════════════ */
 .stats-bar {
     display: flex;
-    gap: 24px;
-    align-items: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-left: 3px solid var(--saffron);
-    border-radius: var(--r-lg);
-    padding: 14px 24px;
+    gap: 12px;
+    align-items: stretch;
     margin: 12px 0 18px;
-    box-shadow: var(--shadow-sm);
     flex-wrap: wrap;
 }
 .stat-item {
-    font-size: 12px;
+    flex: 1;
+    min-width: 80px;
+    background: var(--bg-cream);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 11px;
     color: var(--text-muted);
     font-weight: 500;
     letter-spacing: 0.3px;
     text-transform: uppercase;
+    transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+    cursor: default;
+}
+.stat-item:hover {
+    background: var(--hem-red-pale);
+    border-color: var(--border-red);
+    box-shadow: var(--shadow-sm);
 }
 .stat-value {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--hem-red);
     font-family: 'Cinzel', serif;
     display: block;
     line-height: 1.2;
-    margin-top: 2px;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -640,7 +719,7 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
 .subcat-header {
     background: var(--saffron-pale);
     border-left: 3px solid var(--saffron);
-    padding: 8px 14px;
+    padding: 9px 16px;
     margin: 14px 0 6px;
     border-radius: 0 var(--r-sm) var(--r-sm) 0;
     font-size: 12px;
@@ -648,6 +727,7 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
     color: var(--saffron);
     letter-spacing: 0.8px;
     text-transform: uppercase;
+    box-shadow: 2px 0 0 var(--saffron) inset;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -659,6 +739,11 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
     object-fit: cover;
     background: var(--bg-cream);
     box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+.product-thumb:hover {
+    transform: scale(1.08);
+    box-shadow: var(--shadow-md);
 }
 .product-thumb-placeholder {
     border-radius: var(--r-sm);
@@ -669,16 +754,22 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PRODUCT ROW hover
+   PRODUCT ROW hover — improved spacing & hierarchy
 ═══════════════════════════════════════════════════════════════════════════ */
 .product-row-hover {
     border-radius: var(--r-sm);
-    transition: background-color var(--t-fast);
-    padding: 2px 4px;
-    margin: 1px 0;
+    transition:
+        background-color 0.15s ease-out,
+        border-color 0.15s ease-out,
+        transform 0.15s ease-out;
+    padding: 6px 10px;
+    margin: 2px 0;
+    border-left: 3px solid transparent;
 }
 .product-row-hover:hover {
     background: var(--hem-red-pale);
+    border-left-color: var(--hem-red);
+    transform: scale(1.005);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -692,15 +783,18 @@ section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
     margin: 8px 0;
     color: var(--saffron);
     font-size: 14px;
+    font-weight: 500;
 }
 .confirm-dialog-danger {
     background: var(--hem-red-pale);
     border: 1px solid var(--border-red);
+    border-left: 4px solid var(--hem-red);
     border-radius: var(--r-md);
     padding: 16px 20px;
     margin: 8px 0;
     color: var(--hem-red-deep);
     font-size: 14px;
+    font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -761,6 +855,7 @@ div[data-testid="stDataEditor"] thead th {
     font-family: 'Cinzel', serif !important;
     font-size: 28px !important;
     font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -805,6 +900,7 @@ div[data-testid="stDataEditor"] thead th {
 [data-testid="stCheckbox"] label {
     color: var(--text-body) !important;
     font-size: 13px !important;
+    line-height: 1.5 !important;
 }
 [data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
     background: var(--hem-red) !important;
@@ -828,12 +924,14 @@ hr {
     position: relative;
 }
 hr::after {
-    content: '🔥';
+    content: '◆';
     position: absolute;
     left: 50%; transform: translateX(-50%) translateY(-60%);
     background: var(--bg-page);
     padding: 0 10px;
-    font-size: 12px;
+    font-size: 8px;
+    color: var(--gold);
+    line-height: 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -860,17 +958,43 @@ hr::after {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EMPTY STATE
+   EMPTY STATE — Engaging with pulsing ring
 ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes empty-ring-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(200,16,46,0.20); }
+    70%  { box-shadow: 0 0 0 14px rgba(200,16,46,0); }
+    100% { box-shadow: 0 0 0 0 rgba(200,16,46,0); }
+}
+
 .empty-state {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-muted);
 }
 .empty-state-icon {
-    font-size: 56px;
-    margin-bottom: 20px;
-    opacity: 0.4;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--hem-red-pale);
+    border: 2px solid var(--border-red);
+    border-radius: 50%;
+    font-size: 36px;
+    animation: empty-ring-pulse 2.5s ease-out infinite;
+}
+.empty-state-action {
+    color: var(--hem-red);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: color var(--t-fast);
+}
+.empty-state-action:hover {
+    color: var(--hem-red-deep);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -907,6 +1031,7 @@ hr::after {
     margin-left: 8px;
     box-shadow: 0 2px 8px rgba(200,16,46,0.40);
     letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -915,8 +1040,25 @@ hr::after {
 @media (max-width: 768px) {
     .main-title .title-brand { font-size: 28px; letter-spacing: 4px; }
     .main-title { padding: 24px 20px 18px; }
-    .stats-bar { flex-direction: column; gap: 10px; }
+    .stats-bar { flex-direction: column; gap: 8px; }
     .section-header { font-size: 16px; padding: 12px 18px; }
+    .stat-item { min-width: unset; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION — Respect system preference (accessibility)
+═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .main-title::before { animation: none !important; }
+    .badge-new { animation: none !important; }
+    .empty-state-icon { animation: none !important; }
 }
 </style>
 """
