@@ -50,7 +50,7 @@ def render_export_tab(products_df: pd.DataFrame) -> None:
 
     if full_case_df.empty:
         try:
-            full_case_df = pd.read_excel(CASE_SIZE_PATH, dtype=str)
+            full_case_df = pd.read_excel(CASE_SIZE_PATH, dtype=str, header=1)
             full_case_df.columns = [c.strip() for c in full_case_df.columns]
         except Exception as e:
             st.error(f"Could not load Case Size data: {e}")
@@ -58,51 +58,49 @@ def render_export_tab(products_df: pd.DataFrame) -> None:
     selection_map: dict = {}
 
     if not full_case_df.empty:
-        suffix_col = next(
-            (c for c in full_case_df.columns if "suffix" in c.lower()), None
-        )
         cbm_col = next(
             (c for c in full_case_df.columns if "cbm" in c.lower()), "CBM"
         )
+        desc_col = next(
+            (c for c in full_case_df.columns if "description" in c.lower()), None
+        )
 
-        if not suffix_col:
-            st.error(
-                f"Cannot find 'Carton Suffix' column in Case Size file. "
-                f"Available columns: {full_case_df.columns.tolist()}"
-            )
-        else:
-            cols_per_row = 2
-            cat_chunks   = [
-                cart_categories[i:i+cols_per_row]
-                for i in range(0, len(cart_categories), cols_per_row)
-            ]
-            for chunk in cat_chunks:
-                cols = st.columns(len(chunk))
-                for col, cat in zip(cols, chunk):
-                    with col:
-                        options = full_case_df[
-                            full_case_df["Category"] == cat
-                        ].copy()
-                        if not options.empty:
-                            # ✅ REPLACE WITH THIS (fixed code)
+        cols_per_row = 2
+        cat_chunks   = [
+            cart_categories[i:i+cols_per_row]
+            for i in range(0, len(cart_categories), cols_per_row)
+        ]
+        for chunk in cat_chunks:
+            cols = st.columns(len(chunk))
+            for col, cat in zip(cols, chunk):
+                with col:
+                    options = full_case_df[
+                        full_case_df["Category"] == cat
+                    ].copy()
+                    if not options.empty:
+                        if desc_col:
                             options["_label"] = options.apply(
                                 lambda x: (
-                                    f"{str(x.get(suffix_col, '') or '').strip()} "
+                                    f"{str(x.get(desc_col, '') or '').strip()} "
                                     f"(CBM: {str(x.get(cbm_col, '') or '').strip()})"
                                 ),
                                 axis=1,
-
                             )
-                            chosen = st.selectbox(
-                                f"📦 **{cat}**",
-                                options["_label"].tolist(),
-                                key=f"case_{cat}",
-                            )
-                            selection_map[cat] = options[
-                                options["_label"] == chosen
-                            ].iloc[0].to_dict()
                         else:
-                            st.warning(f"No case sizes for: {cat}")
+                            options["_label"] = options.apply(
+                                lambda x: f"Option {x.name + 1} (CBM: {str(x.get(cbm_col, '') or '').strip()})",
+                                axis=1,
+                            )
+                        chosen = st.selectbox(
+                            f"📦 **{cat}**",
+                            options["_label"].tolist(),
+                            key=f"case_{cat}",
+                        )
+                        selection_map[cat] = options[
+                            options["_label"] == chosen
+                        ].iloc[0].to_dict()
+                    else:
+                        st.warning(f"No case sizes for: {cat}")
 
     gold_divider()
 
@@ -173,8 +171,6 @@ def _generate_files(products_df, client_name, selection_map):
     df["SerialNo"] = range(1, len(df) + 1)
 
     # ── Detect catalogue for dynamic cover page ────────────────────────────
-    # If ALL products belong to one non-HEM catalogue → use that cover
-    # Otherwise (HEM-only or mixed) → use default cover
     cart_catalogues = set(df["Catalogue"].dropna().unique()) if "Catalogue" in df.columns else set()
     if len(cart_catalogues) == 1:
         single_catalogue = cart_catalogues.pop()
