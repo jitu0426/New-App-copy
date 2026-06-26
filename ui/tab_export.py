@@ -51,7 +51,7 @@ def render_export_tab(products_df: pd.DataFrame) -> None:
     if full_case_df.empty:
         try:
             full_case_df = pd.read_excel(CASE_SIZE_PATH, dtype=str, header=1)
-            full_case_df.columns = [c.strip() for c in full_case_df.columns]
+            
         except Exception as e:
             st.error(f"Could not load Case Size data: {e}")
 
