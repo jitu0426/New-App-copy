@@ -53,6 +53,7 @@ def render_export_tab(products_df: pd.DataFrame) -> None:
             full_case_df = pd.read_excel(CASE_SIZE_PATH, dtype=str, header=1)
             full_case_df.columns = [c.strip() for c in full_case_df.columns]
             full_case_df["Category"] = full_case_df["Category"].str.replace(" ", " ", regex=False).str.strip()
+            full_case_df["_cat_key"] = full_case_df["Category"].str.upper().str.strip()
         except Exception as e:
             st.error(f"Could not load Case Size data: {e}")
 
@@ -73,8 +74,9 @@ def render_export_tab(products_df: pd.DataFrame) -> None:
             cols = st.columns(len(chunk))
             for col, cat in zip(cols, chunk):
                 with col:
+                    cat_key = cat.upper().strip()
                     options = full_case_df[
-                        full_case_df["Category"] == cat
+                        full_case_df["_cat_key"] == cat_key
                     ].copy()
                     if not options.empty:
                         if qty_col:
